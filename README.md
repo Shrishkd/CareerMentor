@@ -162,9 +162,8 @@ Frontend → Displays Report & Download Link
 
 ## 👨‍💻 Author
 
-**Shrish [@Career Mentor Project]**
-🎓 B.Tech CSE (AI/ML) @ VIT Bhopal University
-💡 Passionate about AI, Full-Stack Development & FinTech.
+**Shrish [https://shrish-portfolio.netlify.app]**
+
 
 ---
 
