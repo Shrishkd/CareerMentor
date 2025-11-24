@@ -24,6 +24,7 @@ lerna-debug.log*
 /reports
 /.venv/
 /venv
+/assets
 
 # Binary / large files
 *.pdf
