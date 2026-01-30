@@ -98,11 +98,23 @@ Career_Mentor/
 
 <img width="1917" height="984" alt="upload" src="https://github.com/user-attachments/assets/3cf1f323-ac1a-49df-bdef-d90154ca46ec" />
 
-<img width="1919" height="990" alt="Q1" src="https://github.com/user-attachments/assets/94220f53-ea12-423b-a7e3-a392eb88a783" />
+<img width="1919" height="970" alt="Q1" src="https://github.com/user-attachments/assets/e4a20798-03a0-4448-8c34-37f09e28069e" />
 
 <img width="1912" height="990" alt="conding qn" src="https://github.com/user-attachments/assets/754e458b-28bb-4b51-9d9e-a19e0e95064b" />
 
-<img width="1880" height="967" alt="report" src="https://github.com/user-attachments/assets/ced82320-b503-41a3-80af-114c14f92fe5" />
+<img width="995" height="918" alt="Performance overview Graph" src="https://github.com/user-attachments/assets/b90e21bc-8149-41da-a82b-1eeb146e8b10" />
+
+<img width="1001" height="735" alt="Detailed qn analysis" src="https://github.com/user-attachments/assets/ced5fb63-9029-460b-9285-6e7afcccb7c5" />
+
+<img width="844" height="222" alt="Camera report" src="https://github.com/user-attachments/assets/8c73ba0c-3dcb-4e75-ba2d-f88b2f3443aa" />
+
+<img width="1280" height="720" alt="user pic 1" src="https://github.com/user-attachments/assets/73373228-d774-4860-b1d1-8d92c27ee9fe" />
+
+<img width="1280" height="720" alt="user oic 2" src="https://github.com/user-attachments/assets/0c95d67d-bb1a-4239-84de-3addec0c440f" />
+
+
+
+
 
 
 ---
@@ -187,4 +199,6 @@ This project is licensed under the MIT License - feel free to modify and build u
 If you’d like to improve Career Mentor or integrate your own AI models — pull requests and discussions are welcome!
 
 > ⭐ Don’t forget to star the repository if you find it helpful!
+
+
 
