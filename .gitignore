@@ -30,6 +30,7 @@ lerna-debug.log*
 *.pdf
 *.pt
 *.mjs
+*.txt
 
 # Editor & system files
 .vscode/*
