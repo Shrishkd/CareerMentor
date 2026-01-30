@@ -114,7 +114,6 @@ Career_Mentor/
 
 <!-- Row 4 -->
 <div style="display:flex; gap:12px; margin-bottom:12px;">
-  <img src="https://github.com/user-attachments/assets/8c73ba0c-3dcb-4e75-ba2d-f88b2f3443aa" width="48%" alt="Camera Monitoring Report" />
   <img src="https://github.com/user-attachments/assets/0c95d67d-bb1a-4239-84de-3addec0c440f" width="48%" alt="User Camera Image 2" />
   <img src="https://github.com/user-attachments/assets/73373228-d774-4860-b1d1-8d92c27ee9fe" width="48%" alt="User Camera Image 1" />
 </div>
@@ -212,6 +211,7 @@ This project is licensed under the MIT License - feel free to modify and build u
 If you’d like to improve Career Mentor or integrate your own AI models — pull requests and discussions are welcome!
 
 > ⭐ Don’t forget to star the repository if you find it helpful!
+
 
 
 
