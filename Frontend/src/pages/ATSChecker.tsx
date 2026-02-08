@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { clearUserStatsCache } from "@/hooks/useUserStats";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -78,11 +80,13 @@ const mockATSResult: ATSResult = {
 
 export const ATSChecker = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<ATSResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = event.target.files?.[0];
@@ -106,20 +110,137 @@ export const ATSChecker = () => {
     }
   };
 
-  const analyzeResume = () => {
+  const analyzeResume = async () => {
     if (!file) return;
 
     setIsAnalyzing(true);
 
-    // Simulate analysis
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setResults(mockATSResult);
-      toast({
-        title: "Analysis Complete",
-        description: "Your resume has been analyzed successfully!",
+    try {
+      const fd = new FormData();
+      fd.append("resume", file);
+
+      const uploadRes = await fetch(`/api/upload-resume`, {
+        method: "POST",
+        body: fd,
       });
-    }, 3000);
+
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.error || "Upload failed");
+      }
+
+      const uploadJson = await uploadRes.json();
+      const sid = uploadJson.session_id;
+      setSessionId(sid || null);
+
+      // Call backend ATS check
+      const checkRes = await fetch(`/api/ats-check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sid, job_description: "" }),
+      });
+
+      if (!checkRes.ok) {
+        const err = await checkRes.json().catch(() => ({}));
+        throw new Error(err.error || "ATS analysis failed");
+      }
+
+      const checkJson = await checkRes.json();
+      const ats = checkJson.ats_result;
+
+      // Map backend ats shape to frontend ATSResult type
+      const mapped: ATSResult = {
+        overallScore: ats.overallScore || ats.overall_score || 50,
+        sections: {
+          keywords: { score: ats.sections?.keywords?.score || 0, feedback: ats.sections?.keywords?.feedback || [] },
+          formatting: { score: ats.sections?.formatting?.score || 0, feedback: ats.sections?.formatting?.feedback || [] },
+          experience: { score: ats.sections?.experience?.score || 0, feedback: ats.sections?.experience?.feedback || [] },
+          skills: { score: ats.sections?.skills?.score || 0, feedback: ats.sections?.skills?.feedback || [] },
+        },
+        suggestions: ats.suggestions || [],
+      };
+
+      setResults(mapped);
+      toast({ title: "Analysis Complete", description: "Your resume has been analyzed successfully!" });
+      
+      // Save ATS result to backend
+      if (user?.id) {
+        try {
+          await fetch("/api/save-ats-result", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: user.id,
+              session_id: sid || "",
+              ats_score: mapped.overallScore,
+            }),
+          });
+          // Clear cache to refresh dashboard
+          clearUserStatsCache();
+        } catch (err) {
+          console.error("Failed to save ATS result:", err);
+        }
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Analysis Error", description: err.message || String(err), variant: "destructive" });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+
+  const downloadReport = async () => {
+    if (!sessionId) {
+      toast({ title: "No session", description: "Please analyze a resume first.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      // Ask backend to generate an ATS-specific report
+      const genRes = await fetch(`/api/generate-ats-report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+
+      if (!genRes.ok) {
+        const err = await genRes.json().catch(() => ({}));
+        throw new Error(err.error || "Report generation failed");
+      }
+
+      const genJson = await genRes.json();
+
+      // Try to download via /api/download-ats-report
+      const dlRes = await fetch(`/api/download-ats-report/${sessionId}`);
+
+      const contentType = dlRes.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        const j = await dlRes.json();
+        if (j.signed_url) {
+          window.open(j.signed_url, "_blank");
+          return;
+        }
+        throw new Error(j.error || "No download URL returned");
+      }
+
+      // Otherwise assume a file blob
+      const blob = await dlRes.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ats_report_${sessionId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "Download Error", description: err.message || String(err), variant: "destructive" });
+    }
   };
 
   const getScoreColor = (score: number) => {
@@ -339,7 +460,7 @@ export const ATSChecker = () => {
               >
                 Analyze Another Resume
               </Button>
-              <Button className="bg-gradient-primary text-primary-foreground">
+              <Button className="bg-gradient-primary text-primary-foreground" onClick={downloadReport}>
                 <Download className="h-4 w-4 mr-2" />
                 Download Report
               </Button>

@@ -13,7 +13,7 @@ import {
   Shield,
   Mail,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -60,24 +60,26 @@ export const Header = ({ showProfile = true, className = "" }: HeaderProps) => {
   return (
     <header className={`border-b border-border bg-card ${className}`}>
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <motion.div
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex items-center space-x-3"
-        >
-          <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center overflow-hidden">
-            <img 
-              src="/favicon.ico" 
-              alt="Career Mentor" 
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">Career Mentor</h1>
-            <p className="text-sm text-muted-foreground">AI Interview Platform</p>
-          </div>
-        </motion.div>
+        <Link to="/dashboard">
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center space-x-3 cursor-pointer"
+          >
+            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center overflow-hidden">
+              <img
+                src="/favicon.ico"
+                alt="Career Mentor"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">Career Mentor</h1>
+              <p className="text-sm text-muted-foreground">AI Interview Platform</p>
+            </div>
+          </motion.div>
+        </Link>
 
         <div className="flex items-center space-x-4">
           {showProfile && user && (

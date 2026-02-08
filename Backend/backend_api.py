@@ -410,6 +410,48 @@ def check_monitoring_status():
 
 
 # =========================
+# Endpoint: ATS check (using Gemini via exp2.analyze_resume_for_ats)
+# =========================
+@app.route("/api/ats-check", methods=["POST"])
+def ats_check():
+    try:
+        data = request.get_json() or {}
+        session_id = data.get("session_id")
+        job_description = data.get("job_description", "")
+
+        if not session_id or session_id not in active_sessions:
+            return jsonify({"error": "Invalid session_id"}), 400
+
+        session = active_sessions[session_id]
+        resume_text = session.get("resume_text", "")
+
+        # Call analyzer in exp2
+        try:
+            ats_result = exp2.analyze_resume_for_ats(resume_text, job_description)
+        except Exception as e:
+            print("⚠️ analyze_resume_for_ats failed:", e)
+            ats_result = {
+                "overallScore": 50,
+                "sections": {
+                    "keywords": {"score": 50, "feedback": []},
+                    "formatting": {"score": 50, "feedback": []},
+                    "experience": {"score": 50, "feedback": []},
+                    "skills": {"score": 50, "feedback": []},
+                },
+                "suggestions": ["Analysis unavailable"]
+            }
+
+        # store in session for later report generation
+        session["ats_result"] = ats_result
+
+        return jsonify({"ats_result": ats_result})
+
+    except Exception as e:
+        print("❌ ats-check error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+# =========================
 # Endpoint: generate report
 # =========================
 @app.route("/api/generate-report", methods=["POST"])
@@ -507,6 +549,237 @@ def download_report(session_id):
 
     except Exception as e:
         print("❌ download-report error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+# =========================
+# Endpoint: generate ATS report
+# =========================
+@app.route("/api/generate-ats-report", methods=["POST"])
+def generate_ats_report():
+    try:
+        data = request.get_json()
+        session_id = data.get("session_id")
+        if session_id not in active_sessions:
+            return jsonify({"error": "Invalid session"}), 400
+
+        session = active_sessions[session_id]
+        ats_result = session.get("ats_result")
+        
+        if not ats_result:
+            return jsonify({"error": "No ATS analysis found for this session"}), 400
+
+        resume_text = session.get("resume_text", "")
+
+        # Generate ATS-specific PDF report
+        report_path = exp2.create_ats_report(ats_result, resume_text)
+
+        if not report_path:
+            return jsonify({"error": "Failed to generate ATS report"}), 500
+
+        # Store metadata for download
+        meta = {"storage": "local", "path": report_path, "url": None}
+
+        # Try uploading to Supabase if configured
+        if supabase:
+            try:
+                storage_key = f"{session_id}/ats_{os.path.basename(report_path)}"
+                with open(report_path, "rb") as f:
+                    supabase.storage.from_(SUPABASE_BUCKET_REPORTS).upload(
+                        storage_key,
+                        f,
+                        {"content-type": "application/pdf"},
+                    )
+                signed = supabase.storage.from_(SUPABASE_BUCKET_REPORTS).create_signed_url(
+                    storage_key,
+                    60 * 60 * 24 * 7,  # 7 days
+                )
+                meta = {
+                    "storage": "supabase",
+                    "path": storage_key,
+                    "url": signed["signedURL"],
+                }
+            except Exception as e:
+                print("⚠️ Supabase upload failed for ATS report:", e)
+
+        session["ats_report_path"] = report_path
+        session["ats_report_meta"] = meta
+
+        return jsonify({
+            "report_path": report_path,
+            "report_url": meta.get("url"),
+            "ats_result": ats_result
+        })
+
+    except Exception as e:
+        print("❌ generate-ats-report error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+# =========================
+# Endpoint: download ATS report
+# =========================
+@app.route("/api/download-ats-report/<session_id>", methods=["GET"])
+def download_ats_report(session_id):
+    try:
+        if session_id not in active_sessions:
+            return jsonify({"error": "Invalid session"}), 400
+
+        session = active_sessions[session_id]
+        meta = session.get("ats_report_meta") or {}
+        report_path = session.get("ats_report_path")
+
+        # ✅ Prefer Supabase signed URL if available
+        if meta.get("storage") == "supabase" and meta.get("url"):
+            return jsonify({"signed_url": meta["url"]})
+
+        # ✅ Otherwise fall back to local file
+        if not report_path or not os.path.exists(report_path):
+            return jsonify({"error": "ATS report not found"}), 404
+
+        return send_file(report_path, as_attachment=True, download_name=f"ats_report_{session_id}.pdf")
+
+    except Exception as e:
+        print("❌ download-ats-report error:", e)
+        return jsonify({"error": str(e)}), 500
+
+# =========================
+# Endpoint: save interview result
+# =========================
+@app.route("/api/save-interview-result", methods=["POST"])
+def save_interview_result():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        session_id = data.get("session_id")
+        interview_score = data.get("overall_score", 0)
+        questions_count = data.get("questions_count", 0)
+        
+        if not user_id:
+            return jsonify({"error": "user_id required"}), 400
+        
+        # Initialize user stats file if doesn't exist
+        stats_dir = os.path.join(PROJECT_ROOT, "data")
+        os.makedirs(stats_dir, exist_ok=True)
+        stats_file = os.path.join(stats_dir, f"user_{user_id}_stats.json")
+        
+        # Load existing stats
+        if os.path.exists(stats_file):
+            with open(stats_file, "r") as f:
+                user_stats = json.load(f)
+        else:
+            user_stats = {
+                "user_id": user_id,
+                "interviews_completed": 0,
+                "average_score": 0,
+                "total_score": 0,
+                "ats_score": 0,
+                "recent_interviews": []
+            }
+        
+        # Update stats
+        user_stats["interviews_completed"] += 1
+        user_stats["total_score"] += interview_score
+        user_stats["average_score"] = round(user_stats["total_score"] / user_stats["interviews_completed"], 2)
+        
+        # Add to recent interviews (keep last 10)
+        interview_entry = {
+            "date": datetime.utcnow().isoformat(),
+            "score": interview_score,
+            "questions": questions_count,
+            "session_id": session_id,
+            "position": "Practice Interview",
+            "status": "completed"
+        }
+        user_stats["recent_interviews"].insert(0, interview_entry)
+        user_stats["recent_interviews"] = user_stats["recent_interviews"][:10]
+        
+        # Save stats
+        with open(stats_file, "w") as f:
+            json.dump(user_stats, f, indent=2)
+        
+        print(f"✅ Interview result saved for user {user_id}")
+        return jsonify({"status": "success", "stats": user_stats})
+
+    except Exception as e:
+        print("❌ save-interview-result error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+# =========================
+# Endpoint: save ATS result
+# =========================
+@app.route("/api/save-ats-result", methods=["POST"])
+def save_ats_result():
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        ats_score = data.get("ats_score", 0)
+        session_id = data.get("session_id")
+        
+        if not user_id:
+            return jsonify({"error": "user_id required"}), 400
+        
+        # Initialize user stats file if doesn't exist
+        stats_dir = os.path.join(PROJECT_ROOT, "data")
+        os.makedirs(stats_dir, exist_ok=True)
+        stats_file = os.path.join(stats_dir, f"user_{user_id}_stats.json")
+        
+        # Load existing stats
+        if os.path.exists(stats_file):
+            with open(stats_file, "r") as f:
+                user_stats = json.load(f)
+        else:
+            user_stats = {
+                "user_id": user_id,
+                "interviews_completed": 0,
+                "average_score": 0,
+                "total_score": 0,
+                "ats_score": 0,
+                "recent_interviews": []
+            }
+        
+        # Update ATS score
+        user_stats["ats_score"] = ats_score
+        
+        # Save stats
+        with open(stats_file, "w") as f:
+            json.dump(user_stats, f, indent=2)
+        
+        print(f"✅ ATS result saved for user {user_id}: {ats_score}%")
+        return jsonify({"status": "success", "ats_score": ats_score})
+
+    except Exception as e:
+        print("❌ save-ats-result error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+# =========================
+# Endpoint: get user stats
+# =========================
+@app.route("/api/user-stats/<user_id>", methods=["GET"])
+def get_user_stats(user_id):
+    try:
+        stats_dir = os.path.join(PROJECT_ROOT, "data")
+        stats_file = os.path.join(stats_dir, f"user_{user_id}_stats.json")
+        
+        if os.path.exists(stats_file):
+            with open(stats_file, "r") as f:
+                user_stats = json.load(f)
+            return jsonify(user_stats)
+        else:
+            # Return default empty stats
+            return jsonify({
+                "user_id": user_id,
+                "interviews_completed": 0,
+                "average_score": 0,
+                "total_score": 0,
+                "ats_score": 0,
+                "recent_interviews": []
+            })
+
+    except Exception as e:
+        print("❌ get-user-stats error:", e)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":

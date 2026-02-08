@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { clearUserStatsCache } from "@/hooks/useUserStats";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
@@ -33,6 +35,7 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const InterviewResults: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // session passed via navigate(...)
   const { sessionId } = location.state || {};
@@ -68,11 +71,54 @@ const InterviewResults: React.FC = () => {
       if (parsed.final_assessment) {
         setFinalAssessment(parsed.final_assessment);
       }
+      
+      // Save interview result to backend
+      if (user?.id) {
+        const overallScore = parsed.evaluations?.reduce((sum: number, ev: Evaluation) => sum + (ev.overall_score || 0), 0) / (parsed.evaluations?.length || 1) || 0;
+        console.log("📊 Calculated score details:", {
+          evaluations: parsed.evaluations,
+          length: parsed.evaluations?.length || 0,
+          sum: parsed.evaluations?.reduce((sum: number, ev: Evaluation) => sum + (ev.overall_score || 0), 0),
+          calculatedScore: overallScore,
+          roundedScore: Math.round(overallScore)
+        });
+        saveInterviewResult(user.id, parsed.session_id, Math.round(overallScore), parsed.evaluations?.length || 0);
+      }
     } catch (err) {
       console.error("Error parsing InterviewResults:", err);
       navigate("/");
     }
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, user?.id]);
+
+  const saveInterviewResult = async (userId: string, sessionId: string, score: number, questionCount: number) => {
+    try {
+      console.log("📤 Saving interview result:", { userId, sessionId, score, questionCount });
+      const response = await fetch("/api/save-interview-result", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          session_id: sessionId,
+          overall_score: score,
+          questions_count: questionCount,
+        }),
+      });
+      
+      const responseData = await response.json();
+      console.log("📥 Server response:", responseData);
+      
+      if (response.ok) {
+        console.log("✅ Interview result saved");
+        // Clear the cache so dashboard fetches fresh data
+        clearUserStatsCache();
+        console.log("🔄 Cache cleared, listeners notified");
+      } else {
+        console.error("❌ Server error:", responseData);
+      }
+    } catch (err) {
+      console.error("Failed to save interview result:", err);
+    }
+  };
 
   // Load data from localStorage when sessionId is available
   const loadFromLocalStorage = (id: string) => {
@@ -91,6 +137,19 @@ const InterviewResults: React.FC = () => {
       setReportUrl(parsed.report_url || null);
 
       if (parsed.final_assessment) setFinalAssessment(parsed.final_assessment);
+
+      // Save interview result to backend
+      if (user?.id) {
+        const overallScore = parsed.evaluations?.reduce((sum: number, ev: Evaluation) => sum + (ev.overall_score || 0), 0) / (parsed.evaluations?.length || 1) || 0;
+        console.log("📊 Calculated score details (from sessionId route):", {
+          evaluations: parsed.evaluations,
+          length: parsed.evaluations?.length || 0,
+          sum: parsed.evaluations?.reduce((sum: number, ev: Evaluation) => sum + (ev.overall_score || 0), 0),
+          calculatedScore: overallScore,
+          roundedScore: Math.round(overallScore)
+        });
+        saveInterviewResult(user.id, parsed.session_id, Math.round(overallScore), parsed.evaluations?.length || 0);
+      }
     } catch (err) {
       console.error("Failed to load localStorage InterviewResults:", err);
       navigate("/");
@@ -195,7 +254,7 @@ const InterviewResults: React.FC = () => {
 
       {/* Back Home */}
       <button
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/dashboard")}
         className="mt-6 bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
       >
         Go Home

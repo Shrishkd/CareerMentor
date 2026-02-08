@@ -382,6 +382,63 @@ RESPONSE FORMAT (STRICT JSON ONLY, no markdown, no commentary):
             "follow_up_questions": []
         }
 
+
+def analyze_resume_for_ats(resume_text, job_description=""):
+    """
+    Use Gemini to analyze resume for ATS compatibility and return structured JSON
+    matching the frontend `ATSResult` interface.
+    """
+    # Truncate inputs to avoid JSON parsing issues
+    resume_snippet = resume_text[:1000] if resume_text else ""
+    job_snippet = job_description[:500] if job_description else ""
+    
+    # Simple prompt with example JSON structure to guide response
+    prompt = f"""Analyze this resume for ATS compatibility. Return ONLY a JSON object with this exact structure, no extra text:
+{{"overallScore": 85, "sections": {{"keywords": {{"score": 85, "feedback": ["keyword1", "keyword2"]}}, "formatting": {{"score": 82, "feedback": ["tip1", "tip2"]}}, "experience": {{"score": 80, "feedback": ["tip1", "tip2"]}}, "skills": {{"score": 88, "feedback": ["tip1", "tip2"]}}}}, "suggestions": ["suggestion1", "suggestion2"]}}
+
+Resume: {resume_snippet}
+
+Job role: {job_snippet}
+
+Provide scores 0-100 and brief 2-3 word feedback items."""
+
+    print("🔄 Analyzing resume for ATS compatibility using Gemini...")
+    response = call_llm(prompt, temperature=0.1, max_tokens=800)
+
+    resp = response.strip()
+    
+    # Find JSON object
+    if "{" in resp and "}" in resp:
+        start_idx = resp.find("{")
+        end_idx = resp.rfind("}")
+        if start_idx >= 0 and end_idx > start_idx:
+            resp = resp[start_idx:end_idx+1]
+
+    try:
+        parsed = json.loads(resp)
+        if "overallScore" not in parsed:
+            parsed["overallScore"] = int(parsed.get("overall_score", 50))
+        return parsed
+    except Exception as e:
+        print(f"⚠️ Failed parsing ATS JSON from Gemini: {e}. Using heuristic fallback.")
+        # Fallback: heuristic analysis
+        keywords_score = 80 if len(re.findall(r"\b(engineer|developer|python|javascript|react|node)\b", resume_text.lower())) > 0 else 50
+        formatting_score = 85 if len(resume_text.splitlines()) > 20 else 65
+        experience_score = 80 if "experience" in resume_text.lower() else 60
+        skills_score = 75 if "skills" in resume_text.lower() else 55
+        overall = int((keywords_score * 0.35 + formatting_score * 0.2 + experience_score * 0.25 + skills_score * 0.2))
+
+        return {
+            "overallScore": overall,
+            "sections": {
+                "keywords": {"score": keywords_score, "feedback": ["Check keyword alignment", "Add relevant terms"]},
+                "formatting": {"score": formatting_score, "feedback": ["Use headers", "Keep simple"]},
+                "experience": {"score": experience_score, "feedback": ["Quantify achievements", "Add roles"]},
+                "skills": {"score": skills_score, "feedback": ["Use comma-separated", "Be specific"]},
+            },
+            "suggestions": ["Add relevant keywords", "Simplify formatting for ATS"]
+        }
+
 # ========== Keep all your existing audio functions (smart_audio_recording, etc.) ==========
 def detect_speech_activity(audio_chunk, threshold=0.01):
     if len(audio_chunk) == 0:
@@ -792,6 +849,197 @@ def create_comprehensive_report(questions, answers, evaluations, final_assessmen
     return report_path
 
 # --- END of replacement block ---
+
+
+def create_ats_report(ats_result, resume_text):
+    """Generate a PDF report specifically for ATS analysis (not interview)"""
+    print("🔄 Creating ATS analysis report...")
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+
+    def clean_text_for_pdf(text):
+        """Clean text to remove problematic Unicode characters for PDF generation"""
+        if not isinstance(text, str):
+            try:
+                text = str(text)
+            except Exception:
+                return "N/A"
+        
+        # Common replacements for special characters
+        replacements = {
+            '•': '-', '✓': '+', '✗': '-', '→': '->', '←': '<-', '↑': '^',
+            '↓': 'v', '★': '*', '☆': '*', '…': '...', '–': '-', '—': '-',
+            '\u2013': '-', '\u2014': '-', '\u2018': "'", '\u2019': "'", 
+            '\u201c': '"', '\u201d': '"', '\u2026': '...', '\u2022': '-',
+        }
+        
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        
+        # Encode to latin-1, replacing unknown characters with spaces
+        try:
+            text = text.encode('latin-1', 'replace').decode('latin-1')
+        except Exception:
+            text = text.encode('ascii', 'replace').decode('ascii')
+        
+        return text.strip() if text else "N/A"
+
+    # Cover page
+    pdf.add_page()
+    pdf.set_font("Arial", style='B', size=20)
+    pdf.cell(0, 12, "ATS RESUME ANALYSIS REPORT", ln=True, align='C')
+    pdf.set_font("Arial", size=11)
+    pdf.ln(6)
+    pdf.cell(0, 7, f"Date: {datetime.now().strftime('%A, %B %d, %Y at %I:%M %p')}", ln=True, align='C')
+    pdf.ln(10)
+
+    # Overall Score Section
+    overall_score = ats_result.get("overallScore", 0)
+    pdf.set_font("Arial", style='B', size=24)
+    pdf.cell(0, 20, f"{overall_score}%", ln=True, align='C')
+    pdf.set_font("Arial", style='B', size=14)
+    pdf.cell(0, 8, "ATS COMPATIBILITY SCORE", ln=True, align='C')
+    pdf.set_font("Arial", size=11)
+    
+    if overall_score >= 90:
+        assessment = "Excellent - Your resume is highly optimized for ATS systems"
+    elif overall_score >= 70:
+        assessment = "Good - Your resume is well-optimized for most ATS systems"
+    elif overall_score >= 50:
+        assessment = "Fair - Your resume could be improved for better ATS compatibility"
+    else:
+        assessment = "Poor - Your resume needs significant improvements for ATS compatibility"
+    
+    try:
+        pdf.multi_cell(0, 6, clean_text_for_pdf(assessment))
+    except Exception as e:
+        print(f"Warning: Could not write assessment: {e}")
+        pdf.multi_cell(0, 6, "Assessment: Please review in dashboard")
+    pdf.ln(6)
+
+    # Detailed Breakdown
+    pdf.add_page()
+    pdf.set_font("Arial", style='B', size=16)
+    pdf.cell(0, 10, "DETAILED BREAKDOWN", ln=True)
+    pdf.ln(4)
+
+    sections = ats_result.get("sections", {})
+    section_order = ["keywords", "formatting", "experience", "skills"]
+    
+    for section_name in section_order:
+        if section_name in sections:
+            section_data = sections[section_name]
+            score = section_data.get("score", 0)
+            feedback = section_data.get("feedback", [])
+            
+            try:
+                # Section title with score
+                pdf.set_font("Arial", style='B', size=12)
+                title = section_name.replace("_", " ").title()
+                pdf.cell(0, 8, f"{title}: {score}%", ln=True)
+                
+                # Feedback items (simplified, no special chars)
+                pdf.set_font("Arial", size=10)
+                for item in feedback[:3]:
+                    clean_item = clean_text_for_pdf(str(item))
+                    pdf.multi_cell(0, 5, f"- {clean_item}")
+                pdf.ln(2)
+            except Exception as e:
+                print(f"Warning: Could not write section {section_name}: {e}")
+                pdf.ln(3)
+
+    # Improvement Suggestions
+    pdf.add_page()
+    pdf.set_font("Arial", style='B', size=14)
+    pdf.cell(0, 10, "IMPROVEMENT SUGGESTIONS", ln=True)
+    pdf.ln(4)
+
+    suggestions = ats_result.get("suggestions", [])
+    pdf.set_font("Arial", size=10)
+    
+    for i, suggestion in enumerate(suggestions, 1):
+        if pdf.get_y() > 240:
+            pdf.add_page()
+        try:
+            clean_sugg = clean_text_for_pdf(str(suggestion))
+            pdf.multi_cell(0, 6, f"{i}. {clean_sugg}")
+            pdf.ln(2)
+        except Exception as e:
+            print(f"Warning: Could not write suggestion {i}: {e}")
+            pdf.ln(3)
+
+    # Key Recommendations
+    pdf.add_page()
+    pdf.set_font("Arial", style='B', size=14)
+    pdf.cell(0, 10, "KEY RECOMMENDATIONS", ln=True)
+    pdf.ln(4)
+
+    pdf.set_font("Arial", size=10)
+    recommendations = [
+        "Use standard fonts and formatting to ensure ATS readability",
+        "Include relevant keywords from job descriptions in your resume",
+        "Use clear section headers and bullet points",
+        "Keep numerical values as words rather than symbols",
+        "Avoid tables, graphics, and special formatting",
+        "Use standard section names: Summary, Experience, Education, Skills",
+        "Include your full name at the top",
+        "Use a simple, consistent formatting style throughout"
+    ]
+    
+    for rec in recommendations:
+        if pdf.get_y() > 240:
+            pdf.add_page()
+        try:
+            pdf.multi_cell(0, 6, f"- {rec}")
+            pdf.ln(1)
+        except Exception as e:
+            print(f"Warning: Could not write recommendation: {e}")
+            pdf.ln(2)
+
+    # Save file
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    reports_dir = os.path.join(project_root, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+
+    report_path = os.path.join(
+        reports_dir,
+        f"ats_analysis_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    )
+
+    try:
+        pdf.output(report_path)
+        print(f"✅ ATS Report generated: {report_path}")
+    except UnicodeEncodeError as e:
+        print(f"⚠️ Encoding error in PDF generation: {e}. Retrying with ASCII-only content...")
+        # Try again with a simpler version
+        try:
+            pdf2 = FPDF()
+            pdf2.set_auto_page_break(auto=True, margin=15)
+            pdf2.add_page()
+            pdf2.set_font("Arial", style='B', size=20)
+            pdf2.cell(0, 12, "ATS ANALYSIS REPORT", ln=True, align='C')
+            pdf2.set_font("Arial", size=11)
+            pdf2.ln(2)
+            
+            overall_score = ats_result.get("overallScore", 0)
+            pdf2.set_font("Arial", size=16)
+            pdf2.cell(0, 10, f"Overall Score: {overall_score}%", ln=True)
+            pdf2.ln(5)
+            
+            pdf2.set_font("Arial", size=10)
+            pdf2.multi_cell(0, 5, "See detailed analysis in the dashboard for complete feedback.")
+            
+            pdf2.output(report_path)
+            print(f"✅ ATS Report generated (simplified): {report_path}")
+        except Exception as e2:
+            print(f"❌ Error writing simplified ATS report PDF: {e2}")
+            return None
+    except Exception as e:
+        print(f"❌ Error writing ATS report PDF: {e}")
+        return None
+
+    return report_path
 
 
 def generate_final_interview_assessment(all_evaluations, resume_text):

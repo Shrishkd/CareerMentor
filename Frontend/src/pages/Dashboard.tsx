@@ -24,33 +24,33 @@ const SkeletonBox = ({ className }: { className: string }) => (
 const getStatsData = (userStats: any, statsLoading: boolean) => [
   {
     title: "Interviews Completed",
-    value: statsLoading ? "..." : userStats.interviewsCompleted?.toString(),
+    value: statsLoading ? "..." : userStats?.interviews_completed?.toString() || "0",
     icon: Clock,
     change: statsLoading
       ? "Loading..."
-      : userStats.interviewsCompleted > 0
+      : (userStats?.interviews_completed || 0) > 0
       ? "+1 this week"
       : "No interviews yet",
     color: "text-primary",
   },
   {
     title: "Average Score",
-    value: statsLoading ? "..." : userStats.averageScore?.toString(),
+    value: statsLoading ? "..." : userStats?.average_score?.toString() || "0",
     icon: Award,
     change: statsLoading
       ? "Loading..."
-      : userStats.averageScore > 0
+      : (userStats?.average_score || 0) > 0
       ? "+5% improvement"
       : "Start your first interview",
     color: "text-success",
   },
   {
     title: "ATS Score",
-    value: statsLoading ? "..." : `${userStats.atsScore}%`,
+    value: statsLoading ? "..." : `${userStats?.ats_score || 0}%`,
     icon: FileText,
     change: statsLoading
       ? "Loading..."
-      : userStats.atsScore > 0
+      : (userStats?.ats_score || 0) > 0
       ? "Excellent match"
       : "Upload resume to check",
     color: "text-accent",
@@ -58,7 +58,7 @@ const getStatsData = (userStats: any, statsLoading: boolean) => [
 ];
 
 const getRecentInterviews = (userStats: any, statsLoading: boolean) => {
-  if (statsLoading || !userStats?.recentInterviews?.length) {
+  if (statsLoading || !userStats?.recent_interviews?.length) {
     return [
       {
         date: "No interviews yet",
@@ -68,7 +68,12 @@ const getRecentInterviews = (userStats: any, statsLoading: boolean) => {
       },
     ];
   }
-  return userStats.recentInterviews;
+  return userStats.recent_interviews.map((interview: any) => ({
+    date: interview.date ? new Date(interview.date).toLocaleDateString() : "Unknown date",
+    score: interview.score || 0,
+    position: interview.position || "Interview",
+    status: interview.status || "completed",
+  }));
 };
 
 const suggestedCourses = [
