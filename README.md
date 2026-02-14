@@ -100,6 +100,9 @@ Career_Mentor/
   <img src="https://github.com/user-attachments/assets/3cf1f323-ac1a-49df-bdef-d90154ca46ec" width="48%" alt="Resume Upload Page" />
 </div>
 
+<img width="1919" height="975" alt="image" src="https://github.com/user-attachments/assets/8009b90d-245a-4752-9a4d-7c845b915fd6" />
+
+
 <!-- Row 2 -->
 <div style="display:flex; gap:12px; margin-bottom:12px;">
   <img src="https://github.com/user-attachments/assets/e4a20798-03a0-4448-8c34-37f09e28069e" width="48%" alt="Interview Question Screen" />
