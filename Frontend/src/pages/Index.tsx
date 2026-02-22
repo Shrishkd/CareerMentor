@@ -52,63 +52,63 @@ const feedbacks = [
   {
     name: "Rakesh K.",
     role: "Full Stack Developer",
-    avatar: "https://ui-avatars.com/api/?name=Rakesh+K&background=0D8ABC&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
     text:
       "Career Mentor generated resume-based MERN questions aligned with real interview rounds. The mock coding sessions boosted my confidence and helped me clear my final technical round."
   },
   {
-    name: "Lukesh D. Z",
+    name: "Lukesh D. Zade",
     role: "Aerospace Engineer",
-    avatar: "https://ui-avatars.com/api/?name=Lukesh+D+Z&background=1E40AF&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/men/44.jpg",
     text:
       "The AI mock interviews strengthened my technical explanations and communication. The performance scoring helped me secure my aerospace role."
   },
   {
-    name: "Saumya.",
+    name: "Saumya",
     role: "Designer",
-    avatar: "https://ui-avatars.com/api/?name=Saumya&background=BE185D&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/women/65.jpg",
     text:
       "Portfolio-based design questions improved my presentation clarity. The mock interviews increased my confidence significantly."
   },
   {
     name: "Suvankar N.",
     role: "Full Stack Developer",
-    avatar: "https://ui-avatars.com/api/?name=Suvankar+N&background=0F766E&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/men/68.jpg",
     text:
       "System design and backend questions were perfectly aligned with my resume. The simulations helped me perform under pressure."
   },
   {
     name: "Priyanshu R.",
     role: "Data Analyst",
-    avatar: "https://ui-avatars.com/api/?name=Priyanshu+R&background=1D4ED8&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/men/75.jpg",
     text:
       "The SQL and analytics mock sessions were extremely practical. The feedback improved my data storytelling and helped me get selected."
   },
   {
     name: "Priyansh S.",
     role: "ML Engineer",
-    avatar: "https://ui-avatars.com/api/?name=Priyansh+S&background=0E7490&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/men/83.jpg",
     text:
       "Resume-driven ML and system design questions were spot on. The voice-based simulation prepared me for real interviews."
   },
   {
     name: "A. Rathi",
     role: "Software Developer",
-    avatar: "https://ui-avatars.com/api/?name=A+Rathi&background=2563EB&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/men/91.jpg",
     text:
       "The coding mock environment felt realistic. Performance analytics improved my clarity and time management."
   },
   {
     name: "Aparna Vats",
     role: "Tech Role",
-    avatar: "https://ui-avatars.com/api/?name=Aparna+Vats&background=9333EA&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/women/72.jpg",
     text:
       "Personalized technical and HR questions made preparation focused. The feedback report strengthened my communication skills."
   },
   {
-    name: "Aayushi Shri",
+    name: "Aayushi Shri.",
     role: "Backend Engineer",
-    avatar: "https://ui-avatars.com/api/?name=Aayushi+Shri&background=C026D3&color=fff&size=256",
+    avatar: "https://randomuser.me/api/portraits/women/84.jpg",
     text:
       "Backend architecture questions were realistic and challenging. After multiple mock sessions, I confidently cleared my interview."
   }
