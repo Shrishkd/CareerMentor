@@ -2,40 +2,29 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Camera, 
-  Brain, 
-  Shield, 
-  Zap, 
-  TrendingUp, 
-  Users,
-  ArrowRight,
-  CheckCircle,
-  Star,
-  StarHalf
-} from "lucide-react";
+import { ArrowRight, CheckCircle, Star, StarHalf } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 
 const features = [
   {
-    icon: Brain,
+    iconUrl: "https://img.icons8.com/fluency/48/000000/artificial-intelligence.png",
     title: "AI-Powered Analysis",
     description: "Advanced gesture recognition and behavioral analysis during interviews"
   },
   {
-    icon: Camera,
+    iconUrl: "https://img.icons8.com/fluency/48/000000/video-call.png",
     title: "Real-time Monitoring",
     description: "Live webcam feed with instant feedback on posture and attention"
   },
   {
-    icon: Shield,
+    iconUrl: "https://img.icons8.com/fluency/48/000000/lock-2.png",
     title: "Secure & Private",
     description: "End-to-end encryption with no data storage on our servers"
   },
   {
-    icon: Zap,
+    iconUrl: "https://img.icons8.com/fluency/48/000000/lightning-bolt.png",
     title: "Instant Results",
     description: "Get detailed reports and improvement suggestions immediately"
   }
@@ -50,65 +39,65 @@ const stats = [
 
 const feedbacks = [
   {
-    name: "Rakesh K.",
+    name: "Rakesh K. Mishra",
     role: "Full Stack Developer",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+    avatar: "/avatars/Rakesh.jpg",
     text:
       "Career Mentor generated resume-based MERN questions aligned with real interview rounds. The mock coding sessions boosted my confidence and helped me clear my final technical round."
   },
   {
     name: "Lukesh D. Zade",
     role: "Aerospace Engineer",
-    avatar: "https://randomuser.me/api/portraits/men/44.jpg",
+    avatar: "/avatars/Lukesh.jpg",
     text:
       "The AI mock interviews strengthened my technical explanations and communication. The performance scoring helped me secure my aerospace role."
   },
   {
     name: "Saumya",
     role: "Designer",
-    avatar: "https://randomuser.me/api/portraits/women/65.jpg",
+    avatar: "/avatars/Saumya.jpg",
     text:
       "Portfolio-based design questions improved my presentation clarity. The mock interviews increased my confidence significantly."
   },
   {
-    name: "Suvankar N.",
+    name: "Suvankar Nayak",
     role: "Full Stack Developer",
-    avatar: "https://randomuser.me/api/portraits/men/68.jpg",
+    avatar: "/avatars/Suvankar.jpg",
     text:
       "System design and backend questions were perfectly aligned with my resume. The simulations helped me perform under pressure."
   },
   {
-    name: "Priyanshu R.",
+    name: "Priyanshu",
     role: "Data Analyst",
-    avatar: "https://randomuser.me/api/portraits/men/75.jpg",
+    avatar: "/avatars/Priyanshu.jpg",
     text:
       "The SQL and analytics mock sessions were extremely practical. The feedback improved my data storytelling and helped me get selected."
   },
   {
-    name: "Priyansh S.",
+    name: "Priyansh Singh",
     role: "ML Engineer",
-    avatar: "https://randomuser.me/api/portraits/men/83.jpg",
+    avatar: "/avatars/Priyansh.jpg",
     text:
       "Resume-driven ML and system design questions were spot on. The voice-based simulation prepared me for real interviews."
   },
   {
-    name: "A. Rathi",
+    name: "Ayush Rathi",
     role: "Software Developer",
-    avatar: "https://randomuser.me/api/portraits/men/91.jpg",
+    avatar: "/avatars/Rathi.jpg",
     text:
       "The coding mock environment felt realistic. Performance analytics improved my clarity and time management."
   },
   {
     name: "Aparna Vats",
     role: "Tech Role",
-    avatar: "https://randomuser.me/api/portraits/women/72.jpg",
+    avatar: "/avatars/Aparna.jpg",
     text:
       "Personalized technical and HR questions made preparation focused. The feedback report strengthened my communication skills."
   },
   {
-    name: "Aayushi Shri.",
+    name: "Aayushi Shrivastav",
     role: "Backend Engineer",
-    avatar: "https://randomuser.me/api/portraits/women/84.jpg",
+    avatar: "/avatars/Aayushi.jpg",
     text:
       "Backend architecture questions were realistic and challenging. After multiple mock sessions, I confidently cleared my interview."
   }
@@ -544,7 +533,7 @@ const Index = () => {
                 <Card className="h-full hover:shadow-primary transition-all duration-300 hover:scale-105">
                   <CardContent className="p-6 text-center">
                     <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <feature.icon className="h-6 w-6 text-primary-foreground" />
+                      <img src={feature.iconUrl} alt={feature.title} className="h-6 w-6" />
                     </div>
                     <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
                     <p className="text-muted-foreground">{feature.description}</p>
@@ -554,6 +543,53 @@ const Index = () => {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Founder Vlog Section */}
+      <section className="py-20 container mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="relative rounded-[2rem] overflow-hidden min-h-[550px] flex items-center shadow-2xl"
+        >
+          {/* Background Image with Grayscale */}
+          <div className="absolute inset-0">
+            <img 
+              src="https://res.cloudinary.com/dks0vhj0j/image/upload/v1771743950/2024-02-29-09-14-23-588_locxin.jpg" 
+              alt="Founder" 
+              className="w-full h-full object-cover grayscale"
+            />
+            {/* Gradient Overlay for Text Readability */}
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/95 to-transparent opacity-100" />
+          </div>
+
+          {/* Content */}
+          <div className="relative z-10 max-w-2xl p-8 md:p-16">
+            <Badge variant="outline" className="mb-6 border-primary text-primary bg-primary/10 px-4 py-1 text-xs tracking-widest uppercase">
+              Founder Vlog
+            </Badge>
+            
+            <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+              Why I Built Career Mentor — <br/>And Why It Matters.
+            </h2>
+            
+            <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-lg">
+              From personal struggles in the job market to building a platform that empowers thousands. 
+              Discover the story behind our mission to democratize interview preparation and help you succeed.
+            </p>
+
+            <Button 
+              size="lg"
+              onClick={() => navigate("/vlog")}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg group rounded-full px-8"
+            >
+              Watch My Journey
+              <ArrowRight className="h-5 w-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+            </Button>
+          </div>
+        </motion.div>
       </section>
 
       <section className="py-16 bg-muted/10">

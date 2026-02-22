@@ -17,6 +17,7 @@ import ResumeUpload from "./pages/ResumeUpload";
 import GrantPermissions from "./pages/GrantPermissions";
 import NotFound from "./pages/NotFound";
 import InterviewResults from "./pages/InterviewResults";
+import Vlog from "./pages/Vlog";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Routes>
             {/* Public / open routes */}
             <Route path="/" element={<Index />} />
+            <Route path="/vlog" element={<Vlog />} />
             <Route
               path="/login"
               element={
