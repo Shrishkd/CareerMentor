@@ -96,31 +96,31 @@ Career_Mentor/
 ## 📸 Screenshot
 <!-- Row 1 -->
 <div style="display:flex; gap:12px; margin-bottom:12px;">
-  <img src="https://github.com/user-attachments/assets/d82498c7-6f77-49b4-903a-2dc07a67fafe" width="48%" alt="Home Page" />
-  <img src="https://github.com/user-attachments/assets/3cf1f323-ac1a-49df-bdef-d90154ca46ec" width="48%" alt="Resume Upload Page" />
+  <img width="48%" alt="Home Page" src="https://github.com/user-attachments/assets/8e96a75f-993f-4e6f-b065-9175c5d9bde3" />
+  <img width="48%" alt="Resume Upload Page" src="https://github.com/user-attachments/assets/8803e726-0431-4412-b4d8-823be10999ff" />
 </div>
 
 <!-- Row 2 -->
 <div style="display:flex; gap:12px; margin-bottom:12px;">
-  <img src="https://github.com/user-attachments/assets/e4a20798-03a0-4448-8c34-37f09e28069e" width="48%" alt="Interview Question Screen" />
-  <img src="https://github.com/user-attachments/assets/754e458b-28bb-4b51-9d9e-a19e0e95064b" width="48%" alt="Coding Question Screen" />
+  <img width="48%" alt="Interview Question Screen" src="https://github.com/user-attachments/assets/a4b0ce9f-ac1e-4fa4-a915-3eb5f1d6b7c5" />
+  <img width="48%" alt="Coding Question Screen" src="https://github.com/user-attachments/assets/a59aa532-def6-4332-a618-dc2a3cc55d54" />
 </div>
 
 <!-- Row 3 -->
 <div style="display:flex; gap:12px; margin-bottom:12px;">
-  <img src="https://github.com/user-attachments/assets/b90e21bc-8149-41da-a82b-1eeb146e8b10" width="48%" alt="Performance Overview Graph" />
-  <img src="https://github.com/user-attachments/assets/ced5fb63-9029-460b-9285-6e7afcccb7c5" width="48%" alt="Detailed Question Analysis" />
+  <img width="48%" alt="Performance Overview Graph"  src="https://github.com/user-attachments/assets/a4659955-d2f8-4021-9f41-2bde352531a4" />
+  <img width="48%" alt="Detailed Question Analysis" src="https://github.com/user-attachments/assets/fb53604c-7e26-4f62-9bdc-e14a38c8ef23" />
 </div>
 
 <!-- Row 4 -->
 <div style="display:flex; gap:12px; margin-bottom:12px;">
-  <img src="https://github.com/user-attachments/assets/0c95d67d-bb1a-4239-84de-3addec0c440f" width="48%" alt="User Camera Image 2" />
-  <img src="https://github.com/user-attachments/assets/73373228-d774-4860-b1d1-8d92c27ee9fe" width="48%" alt="User Camera Image 1" />
+  <img width="48%" alt="User Camera Image 2" src="https://github.com/user-attachments/assets/20116dcb-d1bc-479d-a85b-6c918a2deb9c" />
+  <img width="48%" alt="User Camera Image 1" src="https://github.com/user-attachments/assets/18e1f950-6bc3-4dcc-b806-4340423fbdd3" />
 </div>
 
 <!-- Row 5 -->
 <div style="display:flex; gap:12px;">
-  <img src="https://github.com/user-attachments/assets/8c73ba0c-3dcb-4e75-ba2d-f88b2f3443aa" width="48%" alt="Camera Monitoring Report" />
+  <img width="48%" alt="Camera Monitoring Report" src="https://github.com/user-attachments/assets/cd3910d4-5128-479e-ad45-fdda29f5b9e4" />
 </div>
 
 
