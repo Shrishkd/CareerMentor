@@ -58,9 +58,9 @@ export const Header = ({ showProfile = true, className = "" }: HeaderProps) => {
   };
 
   return (
-    <header className={`border-b border-border bg-card ${className}`}>
+    <header className={`sticky top-0 z-50 border-b border-border bg-card ${className}`}>
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/dashboard">
+        <Link to="/">
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}

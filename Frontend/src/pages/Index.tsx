@@ -11,10 +11,12 @@ import {
   Users,
   ArrowRight,
   CheckCircle,
-  Star
+  Star,
+  StarHalf
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 
 const features = [
   {
@@ -42,19 +44,374 @@ const features = [
 const stats = [
   { value: "10K+", label: "Interviews Conducted" },
   { value: "95%", label: "Success Rate" },
-  { value: "4.9", label: "User Rating" },
+  { value: "4.5+", label: "User Rating" },
   { value: "50+", label: "Companies Trust Us" }
 ];
 
+const feedbacks = [
+  {
+    name: "Rakesh K.",
+    role: "Full Stack Developer",
+    avatar: "https://ui-avatars.com/api/?name=Rakesh+K&background=0D8ABC&color=fff&size=256",
+    text:
+      "Career Mentor generated resume-based MERN questions aligned with real interview rounds. The mock coding sessions boosted my confidence and helped me clear my final technical round."
+  },
+  {
+    name: "Lukesh D. Z",
+    role: "Aerospace Engineer",
+    avatar: "https://ui-avatars.com/api/?name=Lukesh+D+Z&background=1E40AF&color=fff&size=256",
+    text:
+      "The AI mock interviews strengthened my technical explanations and communication. The performance scoring helped me secure my aerospace role."
+  },
+  {
+    name: "Saumya.",
+    role: "Designer",
+    avatar: "https://ui-avatars.com/api/?name=Saumya&background=BE185D&color=fff&size=256",
+    text:
+      "Portfolio-based design questions improved my presentation clarity. The mock interviews increased my confidence significantly."
+  },
+  {
+    name: "Suvankar N.",
+    role: "Full Stack Developer",
+    avatar: "https://ui-avatars.com/api/?name=Suvankar+N&background=0F766E&color=fff&size=256",
+    text:
+      "System design and backend questions were perfectly aligned with my resume. The simulations helped me perform under pressure."
+  },
+  {
+    name: "Priyanshu R.",
+    role: "Data Analyst",
+    avatar: "https://ui-avatars.com/api/?name=Priyanshu+R&background=1D4ED8&color=fff&size=256",
+    text:
+      "The SQL and analytics mock sessions were extremely practical. The feedback improved my data storytelling and helped me get selected."
+  },
+  {
+    name: "Priyansh S.",
+    role: "ML Engineer",
+    avatar: "https://ui-avatars.com/api/?name=Priyansh+S&background=0E7490&color=fff&size=256",
+    text:
+      "Resume-driven ML and system design questions were spot on. The voice-based simulation prepared me for real interviews."
+  },
+  {
+    name: "A. Rathi",
+    role: "Software Developer",
+    avatar: "https://ui-avatars.com/api/?name=A+Rathi&background=2563EB&color=fff&size=256",
+    text:
+      "The coding mock environment felt realistic. Performance analytics improved my clarity and time management."
+  },
+  {
+    name: "Aparna Vats",
+    role: "Tech Role",
+    avatar: "https://ui-avatars.com/api/?name=Aparna+Vats&background=9333EA&color=fff&size=256",
+    text:
+      "Personalized technical and HR questions made preparation focused. The feedback report strengthened my communication skills."
+  },
+  {
+    name: "Aayushi Shri",
+    role: "Backend Engineer",
+    avatar: "https://ui-avatars.com/api/?name=Aayushi+Shri&background=C026D3&color=fff&size=256",
+    text:
+      "Backend architecture questions were realistic and challenging. After multiple mock sessions, I confidently cleared my interview."
+  }
+];
+
+function FilledStar(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={props.className}>
+      <path d="M12 .587l3.668 7.431L24 9.748l-6 5.847L19.335 24 12 19.897 4.665 24 6 15.595 0 9.748l8.332-1.73z" />
+    </svg>
+  );
+}
+
+function HalfStar(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={props.className}>
+      <defs>
+        <clipPath id="left-half">
+          <rect x="0" y="0" width="12" height="24" />
+        </clipPath>
+      </defs>
+      <g clipPath="url(#left-half)">
+        <path d="M12 .587l3.668 7.431L24 9.748l-6 5.847L19.335 24 12 19.897 4.665 24 6 15.595 0 9.748l8.332-1.73z" />
+      </g>
+    </svg>
+  );
+}
+
+/* ========================= RESPONSIVE ========================= */
+
+function useCardsPerView() {
+  const [cards, setCards] = useState(3);
+
+  useEffect(() => {
+    const update = () => {
+      if (window.innerWidth < 640) setCards(1);
+      else if (window.innerWidth < 1024) setCards(2);
+      else setCards(3);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  return cards;
+}
+
+/* ========================= ULTRA CAROUSEL ========================= */
+
+export type FeedbackCarouselHandle = {
+  pause: () => void;
+  scheduleResumeAfterInactivity: () => void;
+};
+
+const FeedbackCarousel = forwardRef<FeedbackCarouselHandle, object>(function FeedbackCarousel(_, ref) {
+  const cardsPerView = useCardsPerView();
+  const total = feedbacks.length;
+  const pages = Math.ceil(total / cardsPerView);
+
+  const [page, setPage] = useState(1);
+  const [paused, setPaused] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resumeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastWheelTime = useRef(0);
+
+  const cardWidth = 320;
+  const gap = 24;
+  const pageWidth = (cardWidth + gap) * cardsPerView;
+  const WHEEL_THROTTLE_MS = 400;
+  const WHEEL_DELTA_THRESHOLD = 18;
+  const AUTO_SCROLL_INTERVAL_MS = 4500;
+  const INACTIVITY_RESUME_MS = 2500;
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const extendedPages = [
+    pages - 1,
+    ...Array.from({ length: pages }, (_, i) => i),
+    0
+  ];
+
+  /* ================= AUTO SCROLL ================= */
+
+  useEffect(() => {
+    if (paused) return;
+
+    autoRef.current = setInterval(() => {
+      setPage((p) => {
+        if (p >= pages + 1) return 1;
+        return p + 1;
+      });
+    }, AUTO_SCROLL_INTERVAL_MS);
+
+    return () => {
+      if (autoRef.current) clearInterval(autoRef.current);
+    };
+  }, [paused, pages, AUTO_SCROLL_INTERVAL_MS]);
+
+  const stopAutoAndResumeAfterInactivity = useCallback(() => {
+    setPaused(true);
+    if (resumeRef.current) clearTimeout(resumeRef.current);
+    resumeRef.current = setTimeout(() => {
+      setPaused(false);
+      resumeRef.current = null;
+    }, INACTIVITY_RESUME_MS);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    setPaused(true);
+    if (resumeRef.current) {
+      clearTimeout(resumeRef.current);
+      resumeRef.current = null;
+    }
+  }, []);
+
+  const handleMouseLeave = () => {
+    stopAutoAndResumeAfterInactivity();
+  };
+
+  useImperativeHandle(ref, () => ({
+    pause: handleMouseEnter,
+    scheduleResumeAfterInactivity: stopAutoAndResumeAfterInactivity
+  }), [handleMouseEnter, stopAutoAndResumeAfterInactivity]);
+
+  /* ================= WHEEL (RIGHT = NEXT, THROTTLED + CLAMPED) ================= */
+
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) < WHEEL_DELTA_THRESHOLD) return;
+      const now = Date.now();
+      if (now - lastWheelTime.current < WHEEL_THROTTLE_MS) return;
+      lastWheelTime.current = now;
+
+      e.preventDefault();
+      stopAutoAndResumeAfterInactivity();
+      const steps = Math.abs(e.deltaX) > 100 ? 2 : 1;
+
+      if (e.deltaX > 0) {
+        setPage((p) => Math.min(pages + 1, p + steps));
+      } else {
+        setPage((p) => Math.max(0, p - steps));
+      }
+    },
+    [pages, stopAutoAndResumeAfterInactivity]
+  );
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
+
+  /* ================= CLONE SNAP FIX ================= */
+
+  const handleAnimationComplete = useCallback(() => {
+    if (page === pages + 1) {
+      setIsAnimating(false);
+      setPage(1);
+    }
+    if (page === 0) {
+      setIsAnimating(false);
+      setPage(pages);
+    }
+  }, [page, pages]);
+
+  useEffect(() => {
+    if (!isAnimating) {
+      const id = requestAnimationFrame(() => setIsAnimating(true));
+      return () => cancelAnimationFrame(id);
+    }
+  }, [isAnimating]);
+
+  const translateX = page * pageWidth;
+
+  return (
+    <div
+      ref={carouselRef}
+      className="w-full py-2 min-h-[320px]"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={stopAutoAndResumeAfterInactivity}
+      onTouchEnd={stopAutoAndResumeAfterInactivity}
+    >
+      <div
+        className="relative overflow-hidden mx-auto"
+        style={{
+          width: pageWidth + 140,
+          perspective: "1600px"
+        }}
+        onMouseEnter={handleMouseEnter}
+      >
+      <motion.div
+        className="flex"
+        animate={{ x: -translateX }}
+        transition={
+          isAnimating
+            ? { type: "spring", stiffness: 48, damping: 24 }
+            : { duration: 0 }
+        }
+        style={{
+          gap: `${gap}px`,
+          padding: "0 70px"
+        }}
+        onAnimationComplete={handleAnimationComplete}
+      >
+        {extendedPages.map((pageIndex, pIndex) => {
+          const start = pageIndex * cardsPerView;
+
+          return Array.from({ length: cardsPerView }).map(
+            (_, i) => {
+              const actual =
+                (start + i + total) % total;
+
+              const isCenterPage = pIndex === page;
+
+              return (
+                <motion.div
+                  key={`${pIndex}-${i}`}
+                  style={{
+                    minWidth: cardWidth,
+                    height: 280
+                  }}
+                  animate={{
+                    scale: isCenterPage ? 1 : 0.92,
+                    rotateY: isCenterPage ? 0 : i === 0 ? 18 : -18,
+                    opacity: isCenterPage ? 1 : 0.5
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 90,
+                    damping: 20
+                  }}
+                  className="transform-gpu"
+                >
+                  <Card className="h-full shadow-2xl">
+                    <CardContent className="p-6">
+                      <div className="flex items-center mb-4">
+                        <img
+                          src={feedbacks[actual].avatar}
+                          alt={feedbacks[actual].name}
+                          className="w-12 h-12 rounded-full mr-3 object-cover"
+                        />
+                        <div>
+                          <div className="font-semibold">
+                            {feedbacks[actual].name}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {feedbacks[actual].role}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {feedbacks[actual].text}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            }
+          );
+        })}
+      </motion.div>
+
+      {/* DOTS */}
+      <div className="flex justify-center mt-6 gap-3">
+        {Array.from({ length: pages }).map((_, i) => {
+          const active =
+            ((page - 1 + pages) % pages) === i;
+
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                stopAutoAndResumeAfterInactivity();
+                setPage(i + 1);
+              }}
+              className={`w-3 h-3 rounded-full transition-all ${
+                active
+                  ? "bg-accent scale-125"
+                  : "bg-gray-300"
+              }`}
+              aria-label={`Go to page ${i + 1}`}
+            />
+          );
+        })}
+      </div>
+      </div>
+    </div>
+  );
+});
+
 const Index = () => {
   const navigate = useNavigate();
+  const feedbackCarouselRef = useRef<FeedbackCarouselHandle>(null);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <Header showProfile={false} />
       
-      {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -120,7 +477,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-6">
           <motion.div
@@ -138,7 +494,20 @@ const Index = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
               >
-                <h3 className="text-4xl font-bold text-primary mb-2">{stat.value}</h3>
+                {stat.label === "User Rating" ? (
+                  <>
+                    <h3 className="text-4xl font-bold text-primary mb-2">{stat.value}</h3>
+                    <div className="flex items-center justify-center mb-2 space-x-1 text-yellow-400">
+                      <FilledStar className="h-5 w-5 text-yellow-400" />
+                      <FilledStar className="h-5 w-5 text-yellow-400" />
+                      <FilledStar className="h-5 w-5 text-yellow-400" />
+                      <FilledStar className="h-5 w-5 text-yellow-400" />
+                      <HalfStar className="h-5 w-5 text-yellow-400" />
+                    </div>
+                  </>
+                ) : (
+                  <h3 className="text-4xl font-bold text-primary mb-2">{stat.value}</h3>
+                )}
                 <p className="text-muted-foreground">{stat.label}</p>
               </motion.div>
             ))}
@@ -146,7 +515,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="py-20">
         <div className="container mx-auto px-6">
           <motion.div
@@ -188,7 +556,21 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      <section className="py-16 bg-muted/10">
+        <div className="container mx-auto px-6">
+          <div
+            onMouseEnter={() => feedbackCarouselRef.current?.pause()}
+            onMouseLeave={() => feedbackCarouselRef.current?.scheduleResumeAfterInactivity()}
+          >
+            <div className="text-center mb-8">
+              <h3 className="text-3xl font-bold">what they says..</h3>
+            </div>
+
+            <FeedbackCarousel ref={feedbackCarouselRef} />
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 bg-gradient-secondary">
         <div className="container mx-auto px-6 text-center">
           <motion.div
@@ -224,7 +606,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-6 text-center text-muted-foreground">
           <p>&copy; 2024 AI Interview Platform. All rights reserved.</p>
