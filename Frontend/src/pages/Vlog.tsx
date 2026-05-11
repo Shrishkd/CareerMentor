@@ -1,12 +1,16 @@
 import { motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Clock, User, PlayCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 
+const CLOUDINARY_VIDEO_URL = "https://res.cloudinary.com/dks0vhj0j/video/upload/v1771953469/f3c8f04a-e800-44ae-951f-33fc2fb79c82_v9oyga.mp4";
+// ☝️ Replace with your actual Cloudinary video URL
+
 const Vlog = () => {
   const navigate = useNavigate();
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -38,26 +42,47 @@ const Vlog = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Hero Image / Video Placeholder */}
-            <div className="relative aspect-video w-full overflow-hidden rounded-2xl mb-10 shadow-2xl group cursor-pointer">
-              <img 
-                src="https://res.cloudinary.com/dks0vhj0j/image/upload/v1771743950/2024-02-29-09-14-23-588_locxin.jpg" 
-                alt="Founder Journey" 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
-              />
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
-              
-              <div className="absolute inset-0 flex items-center justify-center">
-                <PlayCircle className="w-20 h-20 text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 drop-shadow-lg" />
-              </div>
+            {/* Hero Video / Thumbnail */}
+            <div className="relative aspect-video w-full overflow-hidden rounded-2xl mb-10 shadow-2xl group">
 
-              <div className="absolute bottom-0 left-0 p-8 text-white w-full bg-gradient-to-t from-black/80 to-transparent">
-                <div className="flex items-center space-x-6 text-sm font-medium">
-                  <span className="flex items-center"><User className="h-4 w-4 mr-2" /> Founder</span>
-                  <span className="flex items-center"><Calendar className="h-4 w-4 mr-2" /> Oct 2023</span>
-                  <span className="flex items-center"><Clock className="h-4 w-4 mr-2" /> 12 min watch</span>
-                </div>
-              </div>
+              {isPlaying ? (
+                /* ── VIDEO MODE ── */
+                <video
+                  src={CLOUDINARY_VIDEO_URL}
+                  autoPlay
+                  controls
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                  onEnded={() => setIsPlaying(false)}
+                />
+              ) : (
+                /* ── THUMBNAIL MODE ── */
+                <>
+                  <img 
+                    src="https://res.cloudinary.com/dks0vhj0j/image/upload/v1771743950/2024-02-29-09-14-23-588_locxin.jpg" 
+                    alt="Founder Journey" 
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100"
+                  />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
+
+                  {/* Play Button — clickable */}
+                  <div
+                    className="absolute inset-0 flex items-center justify-center cursor-pointer z-10"
+                    onClick={() => setIsPlaying(true)}
+                  >
+                    <PlayCircle className="w-20 h-20 text-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 drop-shadow-lg" />
+                  </div>
+
+                  {/* Bottom Meta */}
+                  <div className="absolute bottom-0 left-0 p-8 text-white w-full bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                    <div className="flex items-center space-x-6 text-sm font-medium">
+                      <span className="flex items-center"><User className="h-4 w-4 mr-2" /> Founder</span>
+                      <span className="flex items-center"><Calendar className="h-4 w-4 mr-2" /> Oct 2023</span>
+                      <span className="flex items-center"><Clock className="h-4 w-4 mr-2" /> 12 min watch</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold mb-8 leading-tight tracking-tight">
